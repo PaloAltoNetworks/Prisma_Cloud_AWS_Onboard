@@ -1,0 +1,122 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Prisma Cloud IAM Role to set read permissions",
+  "Parameters": {
+    "PrismaCloudRoleName": {
+      "Type": "String",
+      "Description": "Provide an role ARN name (Example: PrismaCloudReadOnlyRole)",
+      "AllowedPattern": "[-_a-zA-Z0-9]+",
+      "Default": "PrismaCloudReadOnlyRole"
+    },
+    "ExternalID": {
+      "Type": "String",
+      "Description": "Provide an ExternalID (Example: Xoih821ddwf)",
+      "MinLength": "1",
+      "AllowedPattern": "[a-zA-Z0-9\\=\\,\\.\\@\\:\\/\\-_]*",
+      "ConstraintDescription": "ExternalID must contain alphanumeric characters and only these special characters are allowed =,.@:/-. "
+    }
+  },
+  "Resources": {
+    "PrismaCloudRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "ManagedPolicyArns": [
+          "arn:aws:iam::aws:policy/SecurityAudit"
+        ],
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::188619942792:root"
+              },
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": {
+                  "sts:ExternalId": {
+                    "Ref": "ExternalID"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "PrismaCloud-IAM-ReadOnly-Policy",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Action": [
+                    "apigateway:GET",
+                    "cognito-identity:ListTagsForResource",
+                    "cognito-idp:ListTagsForResource",
+                    "ecr:DescribeImages",
+                    "ecr:GetLifecyclePolicy",
+                    "directconnect:DescribeDirectConnectGateways",
+                    "elasticbeanstalk:ListTagsForResource",
+                    "elasticfilesystem:DescribeTags",
+                    "glacier:GetVaultLock",
+                    "glacier:ListTagsForVault",
+                    "glue:GetSecurityConfigurations",
+                    "logs:GetLogEvents",
+                    "mq:listBrokers",
+                    "mq:describeBroker",
+                    "ram:GetResourceShares",
+                    "secretsmanager:DescribeSecret",
+                    "ssm:GetParameters",
+                    "ssm:ListTagsForResource",
+                    "sqs:SendMessage",
+                    "elasticmapreduce:ListSecurityConfigurations",
+                    "sns:listSubscriptions",
+                    "wafv2:ListResourcesForWebACL",
+                    "wafv2:ListWebACLs",
+                    "waf-regional:ListResourcesForWebACL",
+                    "waf-regional:ListWebACLs"
+                  ],
+                  "Effect": "Allow",
+                  "Resource": "*"
+                }
+              ]
+            }
+          },
+          {
+            "PolicyName": "PrismaCloud-IAM-Remediation-Policy",
+            "PolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Action": [
+                            "iam:UpdateAccountPasswordPolicy",
+                            "ec2:ModifyImageAttribute",
+                            "rds:ModifyDBSnapshotAttribute",
+                            "s3:PutBucketAcl",
+                            "ec2:RevokeSecurityGroupIngress"
+                        ],
+                        "Resource": "*",
+                        "Effect": "Allow"
+                    }
+                ]
+            }
+          }
+        ],
+        "RoleName": {
+          "Ref": "PrismaCloudRoleName"
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "PrismaCloudARN": {
+      "Value": {
+        "Fn::GetAtt": [
+          "PrismaCloudRole",
+          "Arn"
+        ]
+      },
+      "Description": "Role ARN to configure within PrismaCloud Account Setup"
+    }
+  }
+}
